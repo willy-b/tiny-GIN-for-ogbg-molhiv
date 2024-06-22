@@ -66,9 +66,10 @@ device = args.device #'cpu'#'cuda' if torch.cuda.is_available() else 'cpu'
 set_seeds(args.random_seed)
 
 # defaults in comments below get
-# rocauc 0.7825 +/- 0.0121 (mean +/- sample std, n=10;
+# rocauc 0.7835 +/- 0.0125 (mean +/- sample std, n=10;
 # random seeds 0..9 inclusive) on ogbg-molhiv
-# (n.b. stopping at 40 epochs would have improved the score.)
+# (n.b. stopping at 40 epochs would have improved the score,
+# but I had chosen 50 epochs and now have observed the result)
 config = {
  'device': args.device,
  # must be valid ogb dataset id, e.g. ogbg-molhiv, ogbg-molpcba, etc
