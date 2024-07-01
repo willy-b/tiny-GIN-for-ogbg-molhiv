@@ -45,32 +45,32 @@ with the following random seeds and obtained the following results:
 (it will give same results if using CPU of Google Colab L4 and same version of software; see Google Colab notebook link below; randomness affects the training process when training from scratch)
 
 ```
-seed 0: 0.7923 valid, 0.7937 test
-seed 1: 0.8084 valid, 0.7988 test
-seed 2: 0.8106 valid, 0.7803 test
-seed 3: 0.7909 valid, 0.7920 test
-seed 4: 0.8027 valid, 0.7987 test
-seed 5: 0.8053 valid, 0.7741 test
-seed 6: 0.8070 valid, 0.7646 test
-seed 7: 0.8047 valid, 0.7685 test
-seed 8: 0.7888 valid, 0.7760 test
-seed 9: 0.7987 valid, 0.7888 test
+seed 0: 0.792270 valid, 0.793741 test
+seed 1: 0.808428 valid, 0.798843 test
+seed 2: 0.810634 valid, 0.780251 test
+seed 3: 0.790926 valid, 0.791958 test
+seed 4: 0.802656 valid, 0.798700 test
+seed 5: 0.805311 valid, 0.774121 test
+seed 6: 0.807013 valid, 0.764565 test
+seed 7: 0.804723 valid, 0.768452 test
+seed 8: 0.788810 valid, 0.776000 test
+seed 9: 0.798743 valid, 0.788814 test
 ```
 
 If you like Jupyter notebooks and/or Google Colab, you can check the results above in the following notebook, and/or copy the following notebook and run the commands to reproduce the result in their environment (please use CPU of L4 instance to reproduce randomness exactly):
 
-https://colab.research.google.com/drive/11lx7DRuEhfdRGDu1Q_oWvILGQKrP2IsP?usp=sharing
+https://colab.research.google.com/drive/1c3c9SO029Tv5TP_EV1Zeevof-r8CFvE4?usp=sharing
 
 Using `torch.mean()` and `torch.std()` to report the mean and unbiased sample standard deviation, one obtains:
 
 ```
->>> data = torch.tensor([0.7937, 0.7988, 0.7803, 0.7920, 0.7987, 0.7741, 0.7646, 0.7685, 0.7760, 0.7888])
+>> test_rocaucs = torch.tensor([0.793741, 0.798843, 0.780251, 0.791958, 0.798700, 0.774121, 0.764565, 0.768452, 0.776000, 0.788814])
+>> print(f"test rocauc mean: {test_rocaucs.mean():.6f}, test rocauc std: {test_rocaucs.std():.6f}")
+>> valid_rocaucs = torch.tensor([0.792270, 0.808428, 0.810634, 0.790926, 0.802656, 0.805311, 0.807013, 0.804723, 0.788810, 0.798743])
+>> print(f"valid rocauc mean: {valid_rocaucs.mean():.6f}, valid rocauc std: {valid_rocaucs.std():.6f}")
 
->>> data.mean()
-tensor(0.7835)
-
->>> data.std()
-tensor(0.0125)
+test rocauc mean: 0.783544, test rocauc std: 0.012520
+valid rocauc mean: 0.800951, valid rocauc std: 0.007822
 ```
 
 Note that the **test set performance is NEVER consulted or checked by the code in selecting the model**.
@@ -80,6 +80,7 @@ CSVs for validation and test set predictions vs ground truth will be generated a
 
 ## Acknowledgements
 
-Credit to Stanford XCS224W, they had a homework assignment using the ogbg-molhiv dataset which inspired this (the OGB leaderboard was not mentioned in and is not part of the course and this is NOT a copy paste of the homework - which used GCNConv instead of GIN for example).
+Credit to Stanford XCS224W (certificate of completion with link to course and program info can be found at https://digitalcredential.stanford.edu/check/27C7D07B3EF8511E8B9BBA720E9A7C51BE3CBC49F80B7F32D1839B5D24442250U3BuVnNsVW9ldVdCQURiRXFZSXo2d3ZlOW5BSDJWVzUrVit1VGFQRHN2UVhVYjQ3 ),
+they had a homework assignment using the ogbg-molhiv dataset which inspired this (the OGB leaderboard was not mentioned in and is not part of the course and this is NOT a copy paste of the homework - which used GCNConv instead of GIN for example).
 
-Note, this uses the atom and not the edge features of the dataset. This is a work in progress and at time of writing I have been working on this for ~2 days, so haven't tried that yet. This same code will work if the dataset id is changed for ogbg-molpcba -- I am adding that next and attempting to pretrain on that to improve performance on this right now.
+Note, this uses the atom and not the edge features of the dataset. I will be continuing to work on models to improve upon the score here and at time of writing I have been working on this for ~1 week, but do not expect anything to replace this submission from me for some time (due to time required to run experiments and no reason to believe small changes will beat current performance in a statistically significant way) so submitting this as is. This same code will work if the dataset id is changed for ogbg-molpcba -- I am adding that next and attempting to pretrain on that to improve performance on this right now.

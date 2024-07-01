@@ -223,9 +223,9 @@ for epoch in range(1, 1 + config["epochs"]):
     best_model = copy.deepcopy(model)
   print(f'Dataset {config["dataset_id"]}, '
     f'Epoch: {epoch}, '
-    f'Train: {train_metric:.4f} ({dataset.eval_metric}), '
-    f'Valid: {valid_metric:.4f} ({dataset.eval_metric}), '
-    f'Test: {test_metric:.4f} ({dataset.eval_metric})'
+    f'Train: {train_metric:.6f} ({dataset.eval_metric}), '
+    f'Valid: {valid_metric:.6f} ({dataset.eval_metric}), '
+    f'Test: {test_metric:.6f} ({dataset.eval_metric})'
    )
 
 with open(f"best_{config['dataset_id']}_gin_model_{config['num_layers']}_layers_{config['hidden_dim']}_hidden.pkl", "wb") as f:
@@ -236,9 +236,9 @@ valid_metric = eval(best_model, device, valid_loader, evaluator, save_model_resu
 test_metric  = eval(best_model, device, test_loader, evaluator, save_model_results=True, save_filename=f"gin_{config['dataset_id']}_test")[dataset.eval_metric]
 
 print(f'Best model for {config["dataset_id"]} (eval metric {dataset.eval_metric}): '
-      f'Train: {train_metric:.4f}, '
-      f'Valid: {valid_metric:.4f} '
-      f'Test: {test_metric:.4f}')
+      f'Train: {train_metric:.6f}, '
+      f'Valid: {valid_metric:.6f} '
+      f'Test: {test_metric:.6f}')
 print(f"parameter count: {sum(p.numel() for p in best_model.parameters())}")
 
 
