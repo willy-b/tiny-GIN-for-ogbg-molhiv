@@ -1,5 +1,5 @@
 # Steps to reproduce ogbg-molhiv leaderboard submission using GIN:
-# (for https://web.archive.org/web/20240324173558/https://ogb.stanford.edu/docs/leader_graphprop/#ogbg-molhiv )
+# (for https://web.archive.org/web/20240822032633/https://ogb.stanford.edu/docs/leader_graphprop/#ogbg-molhiv )
 
 # 1) Install dependencies (run `install_dependencies.sh` this comes with or commands below):
 #```
@@ -137,6 +137,7 @@ class GINGraphPropertyModel(torch.nn.Module):
       x = self.pool(x, batch)
       x = torch.nn.functional.dropout(x, self.dropout_p, training=self.training)
       # transform the graph embedding to the output dimension
+      # MLP after graph embed ensures we are not requiring the raw pooled node embeddings to be linearly separable
       x = self.linear_hidden(x)
       x = torch.nn.functional.relu(x)
       x = torch.nn.functional.dropout(x, self.dropout_p, training=self.training)
