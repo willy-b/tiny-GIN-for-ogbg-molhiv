@@ -1,8 +1,13 @@
 # Code for ogbg-molhiv leaderboard submission using GIN
 
-(for https://web.archive.org/web/20240324173558/https://ogb.stanford.edu/docs/leader_graphprop/#ogbg-molhiv )
+(ogbg-molhiv is an Open Graph Benchmark Graph Property Prediction challenge to predict whether a molecule can inhibit HIV replication or not)
 
-Results so far: rocauc 0.7835 +/- 0.0125 (mean +/- sample std, n=10).
+(see  https://web.archive.org/web/20240822032633/https://ogb.stanford.edu/docs/leader_graphprop/#ogbg-molhiv )
+
+![Picture of ogbg-molhiv leaderboard entries #14 to #22 showing this entry at #22](ogbg-molhiv-leaderboard-snapshot.png)
+
+Results so far: rocauc 0.7835 +/- 0.0125 (mean +/- sample std, n=10) (using a small model of 32,385 total parameters trained from scratch).
+
 These were computed from deterministic results obtained running on CPU using the random seeds 0..9 inclusive (deterministic for same software version on same setup, CPU of L4 instance in Google Colab, see notebook link below).
 
 Nothing impressive, just to practice GNNs and participate!
@@ -25,7 +30,12 @@ pip install ogb # I'm using 1.3.6 right now
 
 Hyperparameter values used:
 
+(results in 32,385 model parameters per `sum(p.numel() for p in model.parameters())`, the advised way to count model parameters per https://web.archive.org/web/20240324175343/https://ogb.stanford.edu/docs/leader_overview/ )
+
 - num_layers: 2
+
+  Note: Choice of 2 layers is based on experiment and justified by e.g. GCN GNN layers/hops discussion in https://arxiv.org/pdf/1806.03536 .
+  Noting that the depth of network for GNN is not the same as depth of network for non-GNN deep neural networks, as it also controls the number of hops in the graph considered for the embedding of each node; one could also make the network used to compute node embedding based on each hop deeper without changing the number of GNN layers (hops)).
 
 - hidden_dim: 64
 
@@ -78,9 +88,21 @@ For each random seed during training the held out validation set performance is 
 
 CSVs for validation and test set predictions vs ground truth will be generated as part of the script, if however you want examples for each of the seeds, I can provide upon request. A .pkl with the model weights will be generated at the end of the script which could be reused for inference. If you would like example weights, they are available upon request (or I can add them here if multiple people ask and would not want to generate on their CPU or in Google colab).
 
+## References
+
+- Hu, Weihua and Fey, Matthias and Zitnik, Marinka and Dong, Yuxiao and Ren, Hongyu and Liu, Bowen and Catasta, Michele and Leskovec, Jure. Open Graph Benchmark: Datasets for Machine Learning on Graphs. arXiv preprint arXiv:2005.00687, 2020.
+
+- Wu, Zhenqin and Ramsundar, Bharath and Feinberg, Evan N and Gomes, Joseph and Geniesse, Caleb and SPappu, Aneesh and Leswing, Karl and Pande, Vijay. Moleculenet: a benchmark for molecular machine learning. Chemical Science, 9(2):513–530, 2018.
+
+- Fey, Matthias and Lenssen, Jan E. Fast Graph Representation Learning with PyTorch Geometric. ICLR Workshop on Representation Learning on Graphs and Manifolds, 2019.
+
 ## Acknowledgements
 
 Credit to Stanford XCS224W (certificate of completion with link to course and program info can be found at https://digitalcredential.stanford.edu/check/27C7D07B3EF8511E8B9BBA720E9A7C51BE3CBC49F80B7F32D1839B5D24442250U3BuVnNsVW9ldVdCQURiRXFZSXo2d3ZlOW5BSDJWVzUrVit1VGFQRHN2UVhVYjQ3 ),
-they had a homework assignment using the ogbg-molhiv dataset which inspired this (the OGB leaderboard was not mentioned in and is not part of the course and this is NOT a copy paste of the homework - which used GCNConv instead of GIN for example).
+they had a homework assignment using the ogbg-molhiv dataset which inspired this (the OGB leaderboard was not mentioned in and is not part of the course and this is NOT a copy paste of the homework - which used GCNConv instead of GIN for example and had many other differences in design).
 
-Note, this uses the atom and not the edge features of the dataset. I will be continuing to work on models to improve upon the score here and at time of writing I have been working on this for ~1 week, but do not expect anything to replace this submission from me for some time (due to time required to run experiments and no reason to believe small changes will beat current performance in a statistically significant way) so submitting this as is. This same code will work if the dataset id is changed for ogbg-molpcba -- I am adding that next and attempting to pretrain on that to improve performance on this right now.
+Credit to "Massively Multitask Networks for Drug Discovery" (Ramsundar et al 2015, https://arxiv.org/abs/1502.02072 ) and "Discovery of a structural class of antibiotics with explainable deep learning" (Wong et al 2023, https://www.nature.com/articles/s41586-023-06887-8 ) for inspiring me to pursue this challenge and to the authors of Wong et al 2023 in particular for making the world a better place by discovering new antibiotics for MRSA using deep learning.
+
+Credit to "Keeping Neural Networks Simple by Minimizing the Description Length of the Weights" ( Hinton et al 1993, https://www.cs.toronto.edu/~fritz/absps/colt93.pdf ), and "Representation Learning on Graphs with Jumping Knowledge Networks" ( Xu et al 2018, https://arxiv.org/abs/1806.03536 ) for giving me ideas that helped me reduce the parameter count while improving generalization (the test data is chosen to be out of distribution; different molecular structure).
+
+Note, this uses the atom and not the edge features of the dataset. I will be continuing to work on models to improve upon the score here and at time of writing I was working on this for ~1 week, but do not expect anything to replace this submission from me for some time (due to time required to run experiments and no reason to believe small changes will beat current performance in a statistically significant way) so submitted this as is. This same code will work if the dataset id is changed for ogbg-molpcba -- I am adding that next and attempting to pretrain on that to improve performance on this right now.
