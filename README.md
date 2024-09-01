@@ -67,6 +67,12 @@ seed 8: 0.788810 valid, 0.776000 test
 seed 9: 0.798743 valid, 0.788814 test
 ```
 
+Seed 0 test Receiver Operating Characteristic (ROC) curve:
+
+(if you use the CPU of a Google Colab L4 instance per notebook linked below you should get the identical result and ROCAUC and the saved model you can use to generate a similar plot)
+
+![Picture of ogbg-molhiv ROC curve for seed 0 result above 0.793741 test set ROCAUC with chance level plotted](tiny_gin_for_ogbg-molhiv_roc_curve_colabL4_cpu_deterministic_seed0_test_0p793741.png)
+
 If you like Jupyter notebooks and/or Google Colab, you can check the results above in the following notebook, and/or copy the following notebook and run the commands to reproduce the result in their environment (please use CPU of L4 instance to reproduce randomness exactly):
 
 https://colab.research.google.com/drive/1c3c9SO029Tv5TP_EV1Zeevof-r8CFvE4?usp=sharing
