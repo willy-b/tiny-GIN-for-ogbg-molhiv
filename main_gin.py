@@ -32,7 +32,7 @@ import random
 from tqdm import tqdm
 
 argparser = argparse.ArgumentParser()
-#argparser.add_argument("--ogb-dataset-id", type=str, default='ogbg-molhiv')
+argparser.add_argument("--dataset_id", type=str, default='ogbg-molhiv')
 argparser.add_argument("--device", type=str, default='cpu')
 argparser.add_argument("--num_layers", type=int, default=2)
 argparser.add_argument("--hidden_dim", type=int, default=64)
@@ -42,6 +42,7 @@ argparser.add_argument("--epochs", type=int, default=50)
 argparser.add_argument("--batch_size", type=int, default=32)
 argparser.add_argument("--weight_decay", type=float, default=1e-6)
 argparser.add_argument("--random_seed", type=int, default=1)
+argparser.add_argument("--hide_test_metric", action="store_true")
 args = argparser.parse_args()
 
 # Let's set a random seed for reproducibility
@@ -73,7 +74,7 @@ set_seeds(args.random_seed)
 config = {
  'device': args.device,
  # must be valid ogb dataset id, e.g. ogbg-molhiv, ogbg-molpcba, etc
- 'dataset_id': 'ogbg-molhiv',
+ 'dataset_id': args.dataset_id,
  'num_layers': args.num_layers,#2,
  'hidden_dim': args.hidden_dim,#64,
  'dropout': args.dropout_p,#0.5,
@@ -84,6 +85,9 @@ config = {
 }
 print(f"{config}")
 
+if args.dataset_id != 'ogbg-molhiv' and args.dataset_id != 'ogbg-molpcba':
+    raise NotImplementedError("Unsupported ogb dataset id! Please try either 'ogbg-molhiv' (single task, ROCAUC metric) or 'ogbg-molpcba' (multi-task, AP metric)")
+
 # dataset loading
 dataset = PygGraphPropPredDataset(name=config["dataset_id"], transform=None)
 evaluator = Evaluator(name=config["dataset_id"])
@@ -91,7 +95,9 @@ split_idx = dataset.get_idx_split()
 
 train_loader = DataLoader(dataset[split_idx["train"]], batch_size=config["batch_size"], shuffle=True)
 valid_loader = DataLoader(dataset[split_idx["valid"]], batch_size=config["batch_size"], shuffle=False)
-test_loader = DataLoader(dataset[split_idx["test"]], batch_size=config["batch_size"], shuffle=False)
+test_loader = None
+if not args.hide_test_metric:
+    test_loader = DataLoader(dataset[split_idx["test"]], batch_size=config["batch_size"], shuffle=False)
 # end dataset loading
 
 # computes a node embedding using GINConv layers, then uses pooling to predict graph level properties
@@ -191,11 +197,21 @@ def eval(model, device, loader, evaluator, save_model_results=False, save_filena
   y_pred = torch.cat(y_pred, dim=0).numpy()
   input_dict = {"y_true": y_true.reshape(-1, 1) if batch.y.shape[1] == 1 else y_true, "y_pred": y_pred.reshape(-1, 1) if batch.y.shape[1] == 1 else y_pred}
   if save_model_results:
-      data = {
-          'y_pred': y_pred.squeeze(),
-          'y_true': y_true.squeeze()
-      }
-      pd.DataFrame(data=data).to_csv('ogbg_graph_' + save_filename + '.csv', sep=',', index=False)
+      single_task = len(y_true.shape) == 1 or y_true.shape[1] == 1
+      if single_task:
+          data = {
+              'y_pred': y_pred.squeeze(),
+              'y_true': y_true.squeeze()
+          }
+          pd.DataFrame(data=data).to_csv('ogbg_graph_' + save_filename + '.csv', sep=',', index=False)
+      else:
+          num_tasks = y_true.shape[1]
+          for task_idx in range(num_tasks):
+              data = {
+                  'y_pred': y_pred[:, task_idx].squeeze(),
+                  'y_true': y_true[:, task_idx].squeeze()
+              }
+              pd.DataFrame(data=data).to_csv('ogbg_graph_' + save_filename + f'_task_{task_idx}.csv', sep=',', index=False)
   return evaluator.eval(input_dict)
 
 model = GINGraphPropertyModel(config['hidden_dim'], dataset.num_tasks, config['num_layers'], config['dropout']).to(device)
@@ -215,31 +231,36 @@ for epoch in range(1, 1 + config["epochs"]):
   loss = train(model, device, train_loader, optimizer, loss_fn)
   train_perf = eval(model, device, train_loader, evaluator)
   val_perf = eval(model, device, valid_loader, evaluator)
-  test_perf = eval(model, device, test_loader, evaluator)
-  train_metric, valid_metric, test_metric = train_perf[dataset.eval_metric], val_perf[dataset.eval_metric], test_perf[dataset.eval_metric]
+  if not args.hide_test_metric:
+      # not necessary as output unused during train loop but needed for reproduciblility as affects number of random number generations, affecting ability to generate previously observed outputs depending on seed
+      test_perf = eval(model, device, test_loader, evaluator)
+  train_metric, valid_metric = train_perf[dataset.eval_metric], val_perf[dataset.eval_metric]
   if valid_metric >= best_valid_metric_at_save_checkpoint and train_metric >= best_train_metric_at_save_checkpoint:
     print(f"New best validation score: {valid_metric} ({dataset.eval_metric}) without training score regression")
     best_valid_metric_at_save_checkpoint = valid_metric
     best_train_metric_at_save_checkpoint = train_metric
     best_model = copy.deepcopy(model)
-  print(f'Dataset {config["dataset_id"]}, '
-    f'Epoch: {epoch}, '
-    f'Train: {train_metric:.6f} ({dataset.eval_metric}), '
-    f'Valid: {valid_metric:.6f} ({dataset.eval_metric}), '
-    f'Test: {test_metric:.6f} ({dataset.eval_metric})'
-   )
+  print(f'Dataset {config["dataset_id"]}, ',
+    f'Epoch: {epoch}, ',
+    f'Train: {train_metric:.6f} ({dataset.eval_metric}), ',
+    f'Valid: {valid_metric:.6f} ({dataset.eval_metric}), ',
+    # no need to display test performance during training steps even if this is a deterministic seed used for reporting test performance (post-hyperparameter selection)
+    # the test would already not be used for selection but no reason to even log it more than once at the end
+    # (we can just report it once the training finishes for this same run below)
+    # (this particular script was originally written just to report the completed model and reproduce the leaderboard result, not for hyperparameter tuning)
+    f'Test: (hidden)')
 
 with open(f"best_{config['dataset_id']}_gin_model_{config['num_layers']}_layers_{config['hidden_dim']}_hidden.pkl", "wb") as f:
   pickle.dump(best_model, f)
 
 train_metric = eval(best_model, device, train_loader, evaluator)[dataset.eval_metric]
 valid_metric = eval(best_model, device, valid_loader, evaluator, save_model_results=True, save_filename=f"gin_{config['dataset_id']}_valid")[dataset.eval_metric]
-test_metric  = eval(best_model, device, test_loader, evaluator, save_model_results=True, save_filename=f"gin_{config['dataset_id']}_test")[dataset.eval_metric]
+test_metric = None
+if not args.hide_test_metric:
+    test_metric  = eval(best_model, device, test_loader, evaluator, save_model_results=True, save_filename=f"gin_{config['dataset_id']}_test")[dataset.eval_metric]
 
-print(f'Best model for {config["dataset_id"]} (eval metric {dataset.eval_metric}): '
-      f'Train: {train_metric:.6f}, '
-      f'Valid: {valid_metric:.6f} '
-      f'Test: {test_metric:.6f}')
+print(f'Best model for {config["dataset_id"]} (eval metric {dataset.eval_metric}): ',
+      f'Train: {train_metric:.6f}, ',
+      f'Valid: {valid_metric:.6f} ',
+      (f'Test: {test_metric:.6f}' if not args.hide_test_metric else 'Test: (hidden)'))
 print(f"parameter count: {sum(p.numel() for p in best_model.parameters())}")
-
-
