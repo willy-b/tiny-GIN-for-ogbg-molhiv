@@ -15,9 +15,9 @@ Other techniques, e.g. decision tree on molecular fingerprints are more efficien
 
 A presentation on this work and related work applying the same exact technique to the also single-task prediction of flaviviral genomic capping enzyme inhibition (slides last updated in 2025-03, link added here to README.md 2025-05-28) is available at:
 
-https://raw.githubusercontent.com/willy-b/tiny-GIN-for-ogbg-molhiv/bf3cf14854499e271b49b3abeb87f9c45013ae0c/tiny_gin_for_ogbg-molhiv_status_update_presentation_slides.pdf
+https://raw.githubusercontent.com/willy-b/tiny-GIN-for-ogbg-molhiv/bf3cf14854499e271b49b3abeb87f9c45013ae0c/tiny_gin_for_ogbg-molhiv_status_update_presentation_slides.pdf (public link)
 
-See also a very early mostly results draft writeup for applying the same tiny GIN (same architecture) to flaviviral genomic capping enzyme inhibition prediction at https://raw.githubusercontent.com/willy-b/tiny-GIN-for-WNV/initial-draft-branch/gnns-to-predict-flaviviral-genomic-capping-enzyme-inhibition.pdf  (at time of writing last updated 2025-03).
+See also a very early mostly results draft writeup for applying the same tiny GIN (same architecture) to flaviviral genomic capping enzyme inhibition prediction at https://raw.githubusercontent.com/willy-b/tiny-GIN-for-WNV/initial-draft-branch/gnns-to-predict-flaviviral-genomic-capping-enzyme-inhibition.pdf  (public link, at time of writing last updated 2025-03).
 
 (With a small change to the architecture, these tiny GINs also appear potentially competitive on multi-task prediction while remaining small (one can see in this repo that the optimal single-task architecture for the tiny GIN here is not competitive exactly as is for the separate challenge of simultaneous multi-task prediction, that is e.g. predicting 128 different molecular properties at the same time, at least on training/validation), time permitting I will make public some work on that sometime in 2025.)
 
